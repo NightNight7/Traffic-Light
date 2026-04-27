@@ -1,123 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traffic Light Game</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-        #traffic-light {
-            width: 100px;
-            height: 300px;
-            background-color: #333;
-            border-radius: 10px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            padding: 10px;
-        }
-        .light {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin: auto;
-            opacity: 0.3;
-        }
-        .red {
-            background-color: red;
-        }
-        .yellow {
-            background-color: yellow;
-        }
-        .green {
-            background-color: green;
-        }
-        #countdown {
-            font-size: 24px;
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ready... Set... Go!</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 24px;
+    }
+
+    .screen { display: none; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 320px; }
+    .screen.active { display: flex; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #222;
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: opacity 0.2s;
+    }
+    button:active { opacity: 0.7; }
+
+    .btn-primary   { background: #34c759; color: #000; }
+    .btn-secondary { background: #333; color: #fff; }
+    .btn-danger    { background: #ff3b30; color: #fff; }
+
+    label { color: #aaa; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+
+    .housing {
+      background: #222;
+      border: 3px solid #444;
+      border-radius: 16px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100px;
+    }
+
+    .light {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto;
+      cursor: pointer;
+      opacity: 0.15;
+      transition: opacity 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .light.red    { background: #ff3b30; }
+    .light.yellow { background: #ffcc00; }
+    .light.green  { background: #34c759; }
+    .light.blue   { background: #0a84ff; }
+
+    .light.on.red    { opacity: 1; box-shadow: 0 0 24px 8px rgba(255,59,48,0.8); }
+    .light.on.yellow { opacity: 1; box-shadow: 0 0 24px 8px rgba(255,204,0,0.8); }
+    .light.on.green  { opacity: 1; box-shadow: 0 0 24px 8px rgba(52,199,89,0.8); }
+    .light.on.blue   { opacity: 1; box-shadow: 0 0 24px 8px rgba(10,132,255,0.8); }
+
+    .light.disabled { cursor: default; }
+
+    .pole { width: 12px; height: 60px; background: #444; margin: 0 auto; }
+    .base { width: 80px; height: 16px; background: #444; border-radius: 4px; margin: 0 auto; }
+
+    #status {
+      font-size: 16px;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    #countdown-display {
+      font-size: 48px;
+      font-weight: bold;
+      color: #ffcc00;
+      min-height: 60px;
+      text-align: center;
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 24px;
+      background: #222;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 13px;
+      color: #aaa;
+      text-align: center;
+    }
+    .score-item span {
+      display: block;
+      font-size: 22px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .sequence-dots { display: flex; gap: 8px; }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #333;
+    }
+    .dot.filled.red    { background: #ff3b30; }
+    .dot.filled.yellow { background: #ffcc00; }
+    .dot.filled.green  { background: #34c759; }
+    .dot.filled.blue   { background: #0a84ff; }
+
+    #result-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.88);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 30px;
+      z-index: 10;
+    }
+    #result-overlay.active { display: flex; }
+    #result-title { font-size: 28px; font-weight: bold; text-align: center; }
+    #result-sub   { font-size: 14px; color: #aaa; text-align: center; }
+    .result-scores { display: flex; gap: 32px; }
+  </style>
 </head>
 <body>
-    <div id="traffic-light">
-        <div class="light red" id="red-light"></div>
-        <div class="light yellow" id="yellow-light"></div>
-        <div class="light green" id="green-light"></div>
+
+<h1>Ready... Set... Go!</h1>
+
+<!-- SCREEN 1: MODE SELECT -->
+<div class="screen active" id="screen-mode">
+  <label>Choose Mode</label>
+  <button class="btn-primary"   onclick="chooseMode('cpu')">1 Player vs Computer</button>
+  <button class="btn-secondary" onclick="chooseMode('2p')">2 Players</button>
+</div>
+
+<!-- SCREEN 2: NAMES -->
+<div class="screen" id="screen-names">
+  <label id="name-label-1">Your Name</label>
+  <input type="text" id="name1" placeholder="Enter name" maxlength="16">
+  <div id="name2-group" style="display:none; flex-direction:column; gap:12px; width:100%;">
+    <label>Player 2 Name</label>
+    <input type="text" id="name2" placeholder="Enter name" maxlength="16">
+  </div>
+  <button class="btn-primary"   onclick="startGame()">Start Game</button>
+  <button class="btn-secondary" onclick="showScreen('screen-mode')">Back</button>
+</div>
+
+<!-- SCREEN 3: GAME -->
+<div class="screen" id="screen-game">
+
+  <div class="scoreboard">
+    <div class="score-item">
+      <span id="score-left-val">0</span>
+      <div id="score-left-name">Player</div>
     </div>
-    <div id="countdown">3</div>
-    <button id="start-btn">Start Game</button>
+    <div class="score-item" id="score-right">
+      <span id="score-right-val">0</span>
+      <div id="score-right-name">Computer</div>
+    </div>
+  </div>
 
-    <script>
-        let currentLight = 0;
-        const lights = [
-            document.getElementById('red-light'),
-            document.getElementById('yellow-light'),
-            document.getElementById('green-light')
-        ];
-        const countdownDisplay = document.getElementById('countdown');
-        const startBtn = document.getElementById('start-btn');
+  <div id="countdown-display"></div>
+  <div id="status">Get ready...</div>
+  <div class="sequence-dots" id="dots"></div>
 
-        function resetLights() {
-            lights.forEach(light => light.style.opacity = 0.3);
-            currentLight = 0;
+  <div class="housing">
+    <div class="light red"    id="l0" onclick="playerTap(0)"></div>
+    <div class="light yellow" id="l1" onclick="playerTap(1)"></div>
+    <div class="light green"  id="l2" onclick="playerTap(2)"></div>
+    <div class="light blue"   id="l3" onclick="playerTap(3)"></div>
+  </div>
+
+  <div class="pole"></div>
+  <div class="base"></div>
+
+  <button class="btn-danger" id="quit-btn" onclick="quitGame()">Quit</button>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div id="result-overlay">
+  <div id="result-title"></div>
+  <div id="result-sub"></div>
+  <div class="result-scores">
+    <div class="score-item">
+      <span id="overlay-score-left">0</span>
+      <div id="overlay-name-left">-</div>
+    </div>
+    <div class="score-item">
+      <span id="overlay-score-right">0</span>
+      <div id="overlay-name-right">-</div>
+    </div>
+  </div>
+  <button class="btn-primary"   onclick="newGame()">New Game</button>
+  <button class="btn-secondary" onclick="quitGame()">Change Mode</button>
+</div>
+
+<script>
+  // ── STATE ──────────────────────────────────────────────────────
+  let mode = 'cpu';
+  let p1Name = 'Player 1';
+  let p2Name = 'Computer';
+  let p1Score = 0;
+  let p2Score = 0;
+
+  let sequence = [];
+  let playerInput = [];
+  let round = 0;
+  const maxRounds = 4;
+  let accepting = false;
+
+  // 2P specific
+  let p1Sequence = [];
+  let twoPlayerPhase = 'p1-input';
+
+  const lights = [
+    document.getElementById('l0'),
+    document.getElementById('l1'),
+    document.getElementById('l2'),
+    document.getElementById('l3')
+  ];
+  const colorNames = ['red','yellow','green','blue'];
+
+  // ── NAVIGATION ─────────────────────────────────────────────────
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function chooseMode(m) {
+    mode = m;
+    document.getElementById('name2-group').style.display = m === '2p' ? 'flex' : 'none';
+    document.getElementById('name-label-1').textContent = m === '2p' ? 'Player 1 Name' : 'Your Name';
+    showScreen('screen-names');
+  }
+
+  function startGame() {
+    p1Name = document.getElementById('name1').value.trim() || 'Player 1';
+    p2Name = mode === '2p'
+      ? (document.getElementById('name2').value.trim() || 'Player 2')
+      : 'Computer';
+
+    p1Score = 0;
+    p2Score = 0;
+    updateScoreboard();
+    showScreen('screen-game');
+
+    if (mode === 'cpu') {
+      document.getElementById('score-right').style.display = 'flex';
+      initCpuRound();
+    } else {
+      document.getElementById('score-right').style.display = 'flex';
+      initTwoPlayerRound();
+    }
+  }
+
+  // ── SCOREBOARD ─────────────────────────────────────────────────
+  function updateScoreboard() {
+    document.getElementById('score-left-name').textContent  = p1Name;
+    document.getElementById('score-left-val').textContent   = p1Score;
+    document.getElementById('score-right-name').textContent = p2Name;
+    document.getElementById('score-right-val').textContent  = p2Score;
+  }
+
+  // ── DOTS ───────────────────────────────────────────────────────
+  function renderDots(total, filledColors) {
+    const container = document.getElementById('dots');
+    container.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (filledColors[i] !== undefined) {
+        d.classList.add('filled', colorNames[filledColors[i]]);
+      }
+      container.appendChild(d);
+    }
+  }
+
+  // ── LIGHT CONTROL ──────────────────────────────────────────────
+  function illuminate(index, duration = 500) {
+    return new Promise(resolve => {
+      lights[index].classList.add('on');
+      setTimeout(() => {
+        lights[index].classList.remove('on');
+        setTimeout(resolve, 100);
+      }, duration);
+    });
+  }
+
+  function setLightsDisabled(disabled) {
+    lights.forEach(l => {
+      if (disabled) l.classList.add('disabled');
+      else l.classList.remove('disabled');
+    });
+    accepting = !disabled;
+  }
+
+  // ── COUNTDOWN HELPER ───────────────────────────────────────────
+  function runCountdown(name) {
+    return new Promise(resolve => {
+      const display = document.getElementById('countdown-display');
+      const ticks = ['Ready...', 'Set...', 'Go!'];
+      let i = 0;
+      setStatus(`${name} — get ready!`);
+      display.textContent = ticks[i];
+      const interval = setInterval(() => {
+        i++;
+        if (i < ticks.length) {
+          display.textContent = ticks[i];
+        } else {
+          clearInterval(interval);
+          display.textContent = '';
+          resolve();
         }
+      }, 1000);
+    });
+  }
 
-        function switchLight() {
-            resetLights();
-            if (currentLight < lights.length) {
-                lights[currentLight].style.opacity = 1;
-                currentLight++;
-            } else {
-                currentLight = 0;
-            }
-        }
+  // ── CPU MODE ───────────────────────────────────────────────────
+  function initCpuRound() {
+    sequence = [];
+    round = 0;
+    playerInput = [];
+    nextCpuRound();
+  }
 
-        function playGame() {
-            resetLights();
-            let countdown = 3;
-            countdownDisplay.innerText = countdown;
-            const countdownInterval = setInterval(() => {
-                if (countdown > 1) {
-                    countdown--;
-                    countdownDisplay.innerText = countdown;
-                } else {
-                    clearInterval(countdownInterval);
-                    setTimeout(() => {
-                        executePlayer2Sequence();
-                    }, 1000);
-                }
-            }, 1000);
-        }
+  function nextCpuRound() {
+    round++;
+    sequence.push(Math.floor(Math.random() * 4));
+    playerInput = [];
+    setLightsDisabled(true);
+    setStatus(`Round ${round} of ${maxRounds} — Watch carefully`);
+    renderDots(round, []);
 
-        function executePlayer2Sequence() {
-            resetLights();
-            // Simulate Player 2's sequence with a simple loop
-            let player2Sequence = [0, 1, 2]; // Red, Yellow, Green
-            let index = 0;
+    setTimeout(() => playSequence(sequence, () => {
+      setStatus(`Your turn — repeat the sequence`);
+      setLightsDisabled(false);
+    }), 600);
+  }
 
-            function playNextLight() {
-                if (index < player2Sequence.length) {
-                    lights[player2Sequence[index]].style.opacity = 1;
-                    setTimeout(() => {
-                        lights[player2Sequence[index]].style.opacity = 0.3;
-                        index++;
-                        playNextLight();
-                    }, 1000);
-                }
-            }
-            playNextLight();
-        }
+  async function playSequence(seq, callback) {
+    for (let i = 0; i < seq.length; i++) {
+      await illuminate(seq[i], 500);
+      await delay(150);
+    }
+    if (callback) callback();
+  }
 
-        startBtn.addEventListener('click', playGame);
-    </script>
+  function playerTap(index) {
+    if (!accepting) return;
+    if (mode === 'cpu') handleCpuTap(index);
+    else handleTwoPlayerTap(index);
+  }
+
+  function handleCpuTap(index) {
+    illuminate(index, 300);
+    playerInput.push(index);
+    renderDots(round, playerInput);
+
+    const step = playerInput.length - 1;
+
+    if (playerInput[step] !== sequence[step]) {
+      setLightsDisabled(true);
+      p2Score++;
+      updateScoreboard();
+      setTimeout(() => showResult('Computer Wins!', `${p1Name} got the sequence wrong.`), 800);
+      return;
+    }
+
+    if (playerInput.length === sequence.length) {
+      setLightsDisabled(true);
+      if (round === maxRounds) {
+        p1Score++;
+        updateScoreboard();
+        setTimeout(() => showResult(`${p1Name} Wins!`, 'Full sequence completed!'), 500);
+      } else {
+        setStatus('Correct! Get ready for the next round...');
+        setTimeout(nextCpuRound, 1200);
+      }
+    }
+  }
+
+  // ── 2 PLAYER MODE ──────────────────────────────────────────────
+  function initTwoPlayerRound() {
+    p1Sequence = [];
+    playerInput = [];
+    twoPlayerPhase = 'p1-input';
+    setLightsDisabled(false);
+    renderDots(maxRounds, []);
+    setStatus(`${p1Name} — tap your sequence (max ${maxRounds} lights)`);
+    showConfirmButton(true);
+  }
+
+  function showConfirmButton(show) {
+    let btn = document.getElementById('confirm-btn');
+    if (show) {
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'confirm-btn';
+        btn.className = 'btn-primary';
+        btn.textContent = 'Lock In Sequence';
+        btn.onclick = lockP1Sequence;
+        const quitBtn = document.getElementById('quit-btn');
+        quitBtn.parentNode.insertBefore(btn, quitBtn);
+      }
+      btn.style.display = 'block';
+    } else {
+      if (btn) btn.style.display = 'none';
+    }
+  }
+
+  function handleTwoPlayerTap(index) {
+    if (twoPlayerPhase === 'p1-input') {
+      if (p1Sequence.length >= maxRounds) return;
+      illuminate(index, 300);
+      p1Sequence.push(index);
+      renderDots(maxRounds, p1Sequence);
+      setStatus(`${p1Name} — ${p1Sequence.length} of ${maxRounds} lights selected`);
+    } else {
+      illuminate(index, 300);
+      playerInput.push(index);
+      renderDots(p1Sequence.length, playerInput);
+
+      const step = playerInput.length - 1;
+      if (playerInput[step] !== p1Sequence[step]) {
+        setLightsDisabled(true);
+        p1Score++;
+        updateScoreboard();
+        setTimeout(() => showResult(`${p1Name} Wins!`, `${p2Name} got the sequence wrong.`), 800);
+        return;
+      }
+
+      if (playerInput.length === p1Sequence.length) {
+        setLightsDisabled(true);
+        p2Score++;
+        updateScoreboard();
+        setTimeout(() => showResult(`${p2Name} Wins!`, 'Sequence repeated correctly!'), 500);
+      }
+    }
+  }
+
+  async function lockP1Sequence() {
+    if (p1Sequence.length === 0) {
+      setStatus('Tap at least one light first.');
+      return;
+    }
+    showConfirmButton(false);
+    setLightsDisabled(true);
+    twoPlayerPhase = 'p2-repeat';
+    playerInput = [];
+
+    await runCountdown(p2Name);
+
+    setStatus(`${p2Name} — watch the sequence...`);
+    await delay(400);
+
+    playSequence(p1Sequence, () => {
+      setStatus(`${p2Name} — repeat the sequence!`);
+      setLightsDisabled(false);
+      renderDots(p1Sequence.length, []);
+    });
+  }
+
+  // ── RESULT ─────────────────────────────────────────────────────
+  function showResult(title, sub) {
+    document.getElementById('result-title').textContent       = title;
+    document.getElementById('result-sub').textContent         = sub;
+    document.getElementById('overlay-name-left').textContent  = p1Name;
+    document.getElementById('overlay-score-left').textContent = p1Score;
+    document.getElementById('overlay-name-right').textContent = p2Name;
+    document.getElementById('overlay-score-right').textContent = p2Score;
+    document.getElementById('result-overlay').classList.add('active');
+  }
+
+  function newGame() {
+    document.getElementById('result-overlay').classList.remove('active');
+    if (mode === 'cpu') initCpuRound();
+    else initTwoPlayerRound();
+  }
+
+  function quitGame() {
+    document.getElementById('result-overlay').classList.remove('active');
+    showConfirmButton(false);
+    setLightsDisabled(true);
+    document.getElementById('countdown-display').textContent = '';
+    sequence = [];
+    p1Sequence = [];
+    showScreen('screen-mode');
+  }
+
+  // ── HELPERS ────────────────────────────────────────────────────
+  function setStatus(msg) {
+    document.getElementById('status').textContent = msg;
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+</script>
 </body>
 </html>
