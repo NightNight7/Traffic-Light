@@ -1,29 +1,123 @@
-function lockP1Sequence() {
-  if (p1Sequence.length === 0) {
-    setStatus('Tap at least one light first.');
-    return;
-  }
-  showConfirmButton(false);
-  setLightsDisabled(true);
-  twoPlayerPhase = 'p2-repeat';
-  playerInput = [];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Light Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #traffic-light {
+            width: 100px;
+            height: 300px;
+            background-color: #333;
+            border-radius: 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 10px;
+        }
+        .light {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: auto;
+            opacity: 0.3;
+        }
+        .red {
+            background-color: red;
+        }
+        .yellow {
+            background-color: yellow;
+        }
+        .green {
+            background-color: green;
+        }
+        #countdown {
+            font-size: 24px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="traffic-light">
+        <div class="light red" id="red-light"></div>
+        <div class="light yellow" id="yellow-light"></div>
+        <div class="light green" id="green-light"></div>
+    </div>
+    <div id="countdown">3</div>
+    <button id="start-btn">Start Game</button>
 
-  // Give Player 2 time to focus - add countdown
-  setStatus(`${p2Name} — Get ready!`);
-  
-  let countdown = 3;
-  const countdownInterval = setInterval(() => {
-    countdown--;
-    if (countdown > 0) {
-      setStatus(`${p2Name} — ${countdown}...`);
-    } else {
-      clearInterval(countdownInterval);
-      setStatus(`${p2Name} — watch the sequence...`);
-      playSequence(p1Sequence, () => {
-        setStatus(`${p2Name} — repeat the sequence!`);
-        setLightsDisabled(false);
-        renderDots(p1Sequence.length, []);
-      });
-    }
-  }, 1000);
-}
+    <script>
+        let currentLight = 0;
+        const lights = [
+            document.getElementById('red-light'),
+            document.getElementById('yellow-light'),
+            document.getElementById('green-light')
+        ];
+        const countdownDisplay = document.getElementById('countdown');
+        const startBtn = document.getElementById('start-btn');
+
+        function resetLights() {
+            lights.forEach(light => light.style.opacity = 0.3);
+            currentLight = 0;
+        }
+
+        function switchLight() {
+            resetLights();
+            if (currentLight < lights.length) {
+                lights[currentLight].style.opacity = 1;
+                currentLight++;
+            } else {
+                currentLight = 0;
+            }
+        }
+
+        function playGame() {
+            resetLights();
+            let countdown = 3;
+            countdownDisplay.innerText = countdown;
+            const countdownInterval = setInterval(() => {
+                if (countdown > 1) {
+                    countdown--;
+                    countdownDisplay.innerText = countdown;
+                } else {
+                    clearInterval(countdownInterval);
+                    setTimeout(() => {
+                        executePlayer2Sequence();
+                    }, 1000);
+                }
+            }, 1000);
+        }
+
+        function executePlayer2Sequence() {
+            resetLights();
+            // Simulate Player 2's sequence with a simple loop
+            let player2Sequence = [0, 1, 2]; // Red, Yellow, Green
+            let index = 0;
+
+            function playNextLight() {
+                if (index < player2Sequence.length) {
+                    lights[player2Sequence[index]].style.opacity = 1;
+                    setTimeout(() => {
+                        lights[player2Sequence[index]].style.opacity = 0.3;
+                        index++;
+                        playNextLight();
+                    }, 1000);
+                }
+            }
+            playNextLight();
+        }
+
+        startBtn.addEventListener('click', playGame);
+    </script>
+</body>
+</html>
