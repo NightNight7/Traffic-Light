@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Traffic Light Demo</title>
+  <title>Traffic Light</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -61,7 +61,7 @@
       opacity: 0.15;
     }
 
-    .light.red   { background: #ff3b30; }
+    .light.red    { background: #ff3b30; }
     .light.yellow { background: #ffcc00; }
     .light.green  { background: #34c759; }
 
@@ -73,11 +73,17 @@
     .light.yellow.on {
       opacity: 1;
       box-shadow: 0 0 24px 8px rgba(255, 204, 0, 0.8);
+      animation: blink 0.7s step-start infinite;
     }
 
     .light.green.on {
       opacity: 1;
       box-shadow: 0 0 24px 8px rgba(52, 199, 89, 0.8);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.1; }
     }
 
     p {
@@ -93,19 +99,22 @@
   <h2>Tap a light</h2>
 
   <div class="housing">
-    <div class="light red"    onclick="toggle(this)"></div>
-    <div class="light yellow" onclick="toggle(this)"></div>
-    <div class="light green"  onclick="toggle(this)"></div>
+    <div class="light red"    onclick="select(this)"></div>
+    <div class="light yellow" onclick="select(this)"></div>
+    <div class="light green"  onclick="select(this)"></div>
   </div>
 
   <div class="pole"></div>
   <div class="base"></div>
 
-  <p>Each light toggles independently on a light press</p>
+  <p>One light at a time</p>
 
   <script>
-    function toggle(light) {
-      light.classList.toggle('on');
+    function select(light) {
+      const lights = document.querySelectorAll('.light');
+      const isOn = light.classList.contains('on');
+      lights.forEach(l => l.classList.remove('on'));
+      if (!isOn) light.classList.add('on');
     }
   </script>
 
