@@ -674,4 +674,28 @@
     p2Score = 0;
     updateScoreboard();
     if (mode === 'cpu') initCpuRound();
-  
+    else initTwoPlayerRound();
+  }
+
+  function quitGame() {
+    document.getElementById('result-overlay').classList.remove('active');
+    showConfirmButton(false);
+    setLightsDisabled(true);
+    document.getElementById('countdown-display').textContent = '';
+    document.getElementById('round-counter').textContent = '';
+    sequence = [];
+    p1Sequence = [];
+    showScreen('screen-mode');
+  }
+
+  // ── HELPERS ────────────────────────────────────────────────────
+  function setStatus(msg) {
+    document.getElementById('status').textContent = msg;
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+</script>
+</body>
+</html>
