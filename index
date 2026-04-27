@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic Light</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+    }
+
+    h2 {
+      color: #aaa;
+      margin-bottom: 24px;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .pole {
+      width: 12px;
+      height: 80px;
+      background: #444;
+      margin: 0 auto;
+    }
+
+    .base {
+      width: 80px;
+      height: 16px;
+      background: #444;
+      border-radius: 4px;
+      margin: 0 auto;
+    }
+
+    .housing {
+      background: #222;
+      border: 3px solid #444;
+      border-radius: 16px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100px;
+    }
+
+    .light {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, opacity 0.2s ease;
+      opacity: 0.15;
+    }
+
+    .light.red   { background: #ff3b30; }
+    .light.yellow { background: #ffcc00; }
+    .light.green  { background: #34c759; }
+
+    .light.red.on {
+      opacity: 1;
+      box-shadow: 0 0 24px 8px rgba(255, 59, 48, 0.8);
+    }
+
+    .light.yellow.on {
+      opacity: 1;
+      box-shadow: 0 0 24px 8px rgba(255, 204, 0, 0.8);
+    }
+
+    .light.green.on {
+      opacity: 1;
+      box-shadow: 0 0 24px 8px rgba(52, 199, 89, 0.8);
+    }
+
+    p {
+      color: #555;
+      font-size: 12px;
+      margin-top: 24px;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Tap a light</h2>
+
+  <div class="housing">
+    <div class="light red"    onclick="toggle(this)"></div>
+    <div class="light yellow" onclick="toggle(this)"></div>
+    <div class="light green"  onclick="toggle(this)"></div>
+  </div>
+
+  <div class="pole"></div>
+  <div class="base"></div>
+
+  <p>Each light toggles independently</p>
+
+  <script>
+    function toggle(light) {
+      light.classList.toggle('on');
+    }
+  </script>
+
+</body>
+</html>
