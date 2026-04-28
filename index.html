@@ -131,7 +131,13 @@
       color: #fff;
     }
 
-    .sequence-dots { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 280px; }
+    .sequence-dots {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 280px;
+    }
     .dot {
       width: 12px;
       height: 12px;
@@ -208,7 +214,6 @@
       margin-bottom: 4px;
     }
 
-    /* LEADERBOARD SCREEN */
     #screen-leaderboard .leaderboard {
       background: #222;
       width: 100%;
@@ -302,7 +307,6 @@
     </div>
   </div>
 
-  <!-- Mini leaderboard in overlay -->
   <div class="leaderboard" id="overlay-leaderboard">
     <h3>🏆 Leaderboard</h3>
     <div class="lb-header">
@@ -320,31 +324,27 @@
 
 <script>
   // ── STATE ──────────────────────────────────────────────────────
-  let mode = 'cpu';
-  let p1Name = 'Player 1';
-  let p2Name = 'Computer';
-  let p1Score = 0;
-  let p2Score = 0;
+  let mode     = 'cpu';
+  let p1Name   = 'Player 1';
+  let p2Name   = 'Computer';
+  let p1Score  = 0;
+  let p2Score  = 0;
 
-  let sequence = [];
+  // CPU mode
+  let sequence    = [];
   let playerInput = [];
-  let round = 0;
-  let accepting = false;
+  let round       = 0;
+  let accepting   = false;
 
-  // 2P specific
-  let p1Sequence = [];
-  let twoPlayerPhase = 'p1-input';
-  let p2SequenceLength = 0;
+  // 2P mode
+  let p1Sequence        = [];
+  let twoPlayerPhase    = 'p1-input'; // 'p1-input' | 'p2-repeat'
+  let p2CorrectCount    = 0;          // how many sequences P2 has repeated correctly this game
 
-  // Leaderboard: { name -> { wins, bestSequence } }
+  // Leaderboard
   let leaderboard = {};
 
-  const lights = [
-    document.getElementById('l0'),
-    document.getElementById('l1'),
-    document.getElementById('l2'),
-    document.getElementById('l3')
-  ];
+  const lights     = ['l0','l1','l2','l3'].map(id => document.getElementById(id));
   const colorNames = ['red','yellow','green','blue'];
 
   // ── NAVIGATION ─────────────────────────────────────────────────
@@ -355,8 +355,8 @@
 
   function chooseMode(m) {
     mode = m;
-    document.getElementById('name2-group').style.display = m === '2p' ? 'flex' : 'none';
-    document.getElementById('name-label-1').textContent = m === '2p' ? 'Player 1 Name' : 'Your Name';
+    document.getElementById('name2-group').style.display  = m === '2p' ? 'flex' : 'none';
+    document.getElementById('name-label-1').textContent   = m === '2p' ? 'Player 1 Name' : 'Your Name';
     showScreen('screen-names');
   }
 
@@ -366,7 +366,6 @@
       ? (document.getElementById('name2').value.trim() || 'Player 2')
       : 'Computer';
 
-    // Register players in leaderboard
     registerPlayer(p1Name);
     if (mode === '2p') registerPlayer(p2Name);
 
@@ -375,27 +374,22 @@
     updateScoreboard();
     showScreen('screen-game');
 
-    if (mode === 'cpu') {
-      document.getElementById('score-right').style.display = 'flex';
-      initCpuRound();
-    } else {
-      document.getElementById('score-right').style.display = 'flex';
-      initTwoPlayerRound();
-    }
+    document.getElementById('score-right').style.display = 'flex';
+
+    if (mode === 'cpu') initCpuRound();
+    else initTwoPlayerGame();
   }
 
   // ── LEADERBOARD ────────────────────────────────────────────────
   function registerPlayer(name) {
-    if (!leaderboard[name]) {
-      leaderboard[name] = { wins: 0, bestSequence: 0 };
-    }
+    if (!leaderboard[name]) leaderboard[name] = { wins: 0, bestSequence: 0 };
   }
 
-  function recordWin(name, sequenceLength) {
+  function recordWin(name, sequencesCompleted) {
     if (!leaderboard[name]) registerPlayer(name);
     leaderboard[name].wins++;
-    if (sequenceLength > leaderboard[name].bestSequence) {
-      leaderboard[name].bestSequence = sequenceLength;
+    if (sequencesCompleted > leaderboard[name].bestSequence) {
+      leaderboard[name].bestSequence = sequencesCompleted;
     }
   }
 
@@ -407,17 +401,17 @@
 
   function renderLeaderboardRows(containerId) {
     const container = document.getElementById(containerId);
-    const sorted = getSortedLeaderboard();
+    const sorted    = getSortedLeaderboard();
     if (sorted.length === 0) {
       container.innerHTML = '<div class="lb-empty">No games played yet</div>';
       return;
     }
-    container.innerHTML = sorted.map((entry, i) => `
+    container.innerHTML = sorted.map((e, i) => `
       <div class="lb-row">
         <span class="lb-rank">${i + 1}</span>
-        <span class="lb-name">${entry.name}</span>
-        <span class="lb-wins">${entry.wins}W</span>
-        <span class="lb-seq">${entry.bestSequence}</span>
+        <span class="lb-name">${e.name}</span>
+        <span class="lb-wins">${e.wins}W</span>
+        <span class="lb-seq">${e.bestSequence}</span>
       </div>
     `).join('');
   }
@@ -442,18 +436,16 @@
   function renderDots(total, filledColors) {
     const container = document.getElementById('dots');
     container.innerHTML = '';
-    const show = Math.min(total, 20); // cap visual dots at 20 to avoid overflow
+    const show = Math.min(total, 20);
     for (let i = 0; i < show; i++) {
       const d = document.createElement('div');
       d.className = 'dot';
-      if (filledColors[i] !== undefined) {
-        d.classList.add('filled', colorNames[filledColors[i]]);
-      }
+      if (filledColors[i] !== undefined) d.classList.add('filled', colorNames[filledColors[i]]);
       container.appendChild(d);
     }
   }
 
-  // ── LIGHT CONTROL ──────────────────────────────────────────────
+  // ── LIGHTS ─────────────────────────────────────────────────────
   function illuminate(index, duration = 500) {
     return new Promise(resolve => {
       lights[index].classList.add('on');
@@ -466,8 +458,7 @@
 
   function setLightsDisabled(disabled) {
     lights.forEach(l => {
-      if (disabled) l.classList.add('disabled');
-      else l.classList.remove('disabled');
+      l.classList.toggle('disabled', disabled);
     });
     accepting = !disabled;
   }
@@ -476,10 +467,10 @@
   function runCountdown(name) {
     return new Promise(resolve => {
       const display = document.getElementById('countdown-display');
-      const ticks = ['Ready...', 'Set...', 'Go!'];
+      const ticks   = ['Ready...', 'Set...', 'Go!'];
       let i = 0;
       setStatus(`${name} — get ready!`);
-      display.textContent = ticks[i];
+      display.textContent = ticks[0];
       const interval = setInterval(() => {
         i++;
         if (i < ticks.length) {
@@ -495,8 +486,8 @@
 
   // ── CPU MODE ───────────────────────────────────────────────────
   function initCpuRound() {
-    sequence = [];
-    round = 0;
+    sequence    = [];
+    round       = 0;
     playerInput = [];
     nextCpuRound();
   }
@@ -544,29 +535,31 @@
       updateScoreboard();
       setTimeout(() => showResult(
         'Computer Wins!',
-        `${p1Name} got the sequence wrong at round ${round}.`,
-        round - 1,
-        null
+        `${p1Name} failed at round ${round}.`
       ), 800);
       return;
     }
 
     if (playerInput.length === sequence.length) {
       setLightsDisabled(true);
-      setStatus('Correct! Next round coming up...');
+      setStatus('Correct! Next round...');
       setTimeout(nextCpuRound, 1200);
     }
   }
 
   // ── 2 PLAYER MODE ──────────────────────────────────────────────
-  function initTwoPlayerRound() {
-    p1Sequence = [];
-    playerInput = [];
-    p2SequenceLength = 0;
+  function initTwoPlayerGame() {
+    p2CorrectCount = 0;
+    startP1Turn();
+  }
+
+  function startP1Turn() {
+    p1Sequence     = [];
+    playerInput    = [];
     twoPlayerPhase = 'p1-input';
     setLightsDisabled(false);
     renderDots(0, []);
-    setRoundCounter('');
+    setRoundCounter(p2CorrectCount > 0 ? `${p2Name} streak: ${p2CorrectCount}` : '');
     setStatus(`${p1Name} — tap your sequence, then lock it in`);
     showConfirmButton(true);
   }
@@ -575,13 +568,12 @@
     let btn = document.getElementById('confirm-btn');
     if (show) {
       if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'confirm-btn';
+        btn          = document.createElement('button');
+        btn.id       = 'confirm-btn';
         btn.className = 'btn-primary';
         btn.textContent = 'Lock In Sequence';
-        btn.onclick = lockP1Sequence;
-        const quitBtn = document.getElementById('quit-btn');
-        quitBtn.parentNode.insertBefore(btn, quitBtn);
+        btn.onclick  = lockP1Sequence;
+        document.getElementById('quit-btn').before(btn);
       }
       btn.style.display = 'block';
     } else {
@@ -594,40 +586,36 @@
       illuminate(index, 300);
       p1Sequence.push(index);
       renderDots(p1Sequence.length, p1Sequence);
-      setStatus(`${p1Name} — ${p1Sequence.length} light${p1Sequence.length > 1 ? 's' : ''} selected`);
+      setStatus(`${p1Name} — ${p1Sequence.length} light${p1Sequence.length !== 1 ? 's' : ''} selected`);
+
     } else {
+      // P2 repeating
       illuminate(index, 300);
       playerInput.push(index);
       renderDots(p1Sequence.length, playerInput);
 
       const step = playerInput.length - 1;
+
       if (playerInput[step] !== p1Sequence[step]) {
+        // P2 got it wrong — game over
         setLightsDisabled(true);
-        const seqLen = p1Sequence.length;
-        recordWin(p1Name, seqLen);
+        recordWin(p1Name, p2CorrectCount);
         p1Score++;
         updateScoreboard();
         setTimeout(() => showResult(
           `${p1Name} Wins!`,
-          `${p2Name} got the sequence wrong.`,
-          seqLen,
-          null
+          `${p2Name} repeated ${p2CorrectCount} sequence${p2CorrectCount !== 1 ? 's' : ''} before failing.`
         ), 800);
         return;
       }
 
       if (playerInput.length === p1Sequence.length) {
+        // P2 got it right — increment streak, pass back to P1
+        p2CorrectCount++;
         setLightsDisabled(true);
-        const seqLen = p1Sequence.length;
-        recordWin(p2Name, seqLen);
-        p2Score++;
-        updateScoreboard();
-        setTimeout(() => showResult(
-          `${p2Name} Wins!`,
-          `Sequence of ${seqLen} repeated correctly!`,
-          seqLen,
-          null
-        ), 500);
+        setStatus(`Nice! ${p2CorrectCount} in a row. Pass to ${p1Name}...`);
+        setRoundCounter(`${p2Name} streak: ${p2CorrectCount}`);
+        setTimeout(() => startP1Turn(), 1800);
       }
     }
   }
@@ -639,9 +627,9 @@
     }
     showConfirmButton(false);
     setLightsDisabled(true);
-    renderDots(p1Sequence.length, []); // clear dots immediately — no giveaway
+    renderDots(p1Sequence.length, []); // clear dots — no giveaway
     twoPlayerPhase = 'p2-repeat';
-    playerInput = [];
+    playerInput    = [];
 
     await runCountdown(p2Name);
 
@@ -656,14 +644,13 @@
   }
 
   // ── RESULT ─────────────────────────────────────────────────────
-  function showResult(title, sub, winnerSequence, winnerName) {
+  function showResult(title, sub) {
     document.getElementById('result-title').textContent        = title;
     document.getElementById('result-sub').textContent          = sub;
     document.getElementById('overlay-name-left').textContent   = p1Name;
     document.getElementById('overlay-score-left').textContent  = p1Score;
     document.getElementById('overlay-name-right').textContent  = p2Name;
     document.getElementById('overlay-score-right').textContent = p2Score;
-
     renderLeaderboardRows('lb-overlay-rows');
     document.getElementById('result-overlay').classList.add('active');
   }
@@ -674,7 +661,7 @@
     p2Score = 0;
     updateScoreboard();
     if (mode === 'cpu') initCpuRound();
-    else initTwoPlayerRound();
+    else initTwoPlayerGame();
   }
 
   function quitGame() {
@@ -682,20 +669,15 @@
     showConfirmButton(false);
     setLightsDisabled(true);
     document.getElementById('countdown-display').textContent = '';
-    document.getElementById('round-counter').textContent = '';
-    sequence = [];
+    document.getElementById('round-counter').textContent     = '';
+    sequence   = [];
     p1Sequence = [];
     showScreen('screen-mode');
   }
 
   // ── HELPERS ────────────────────────────────────────────────────
-  function setStatus(msg) {
-    document.getElementById('status').textContent = msg;
-  }
-
-  function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+  function setStatus(msg) { document.getElementById('status').textContent = msg; }
+  function delay(ms)      { return new Promise(resolve => setTimeout(resolve, ms)); }
 </script>
 </body>
 </html>
